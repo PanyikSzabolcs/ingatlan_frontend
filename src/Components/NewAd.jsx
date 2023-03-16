@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 
 
 export function NewAd() {
   const [categories, setCategory] = useState([]);
+  const hibaRef = useRef(null);
+  const navigate = useNavigate();
   useEffect(() => {
     fetch('http://localhost:5000/api/kategoriak')
       .then((data => data.json()))
@@ -11,7 +14,30 @@ export function NewAd() {
   return (
     <div className="container">
       <h2 className="mb-4 text-center">Új hirdetés elküldése</h2>
-      <div className="row">
+      <form className="row" onSubmit={async (e) => {
+        e.preventDefault();
+        const ujIngatlan = {
+          kategoriaId: Number(e.target.elements.kategoriaId.value),
+          leiras: e.target.elements.leiras.value,
+          hirdetesDatuma: e.target.elements.hirdetesDatuma.value,
+          tehermentes: e.target.elements.tehermentes.checked,
+          kepUrl: e.target.elements.kepUrl.value
+        }
+
+        const response = await fetch(`http://localhost:5000/api/ujingatlan`, {
+          method: 'POST',
+          headers: {
+            "content-type": "application/json"
+          },
+          body: JSON.stringify(ujIngatlan),
+        })
+        if (response.status === 200) {
+          navigate("/offers")
+        } else {
+          hibaRef.current.innerHTML = response.status
+        }
+      }
+      }>
         <div className="offset-lg-3 offset-md-2 col-lg-6 col-md-8 col-12">
           <div className="mb-3">
             <label for="category" className="form-label">Ingatlan kategóriája</label>
@@ -25,7 +51,7 @@ export function NewAd() {
 
           <div className="mb-3">
             <label for="date" className="form-label">Hirdetés dátuma</label>
-            <input type="date" className="form-control" name="hirdetesDatuma" readOnly={true} value={new Date().toISOString().split('T')[0]}/>
+            <input type="date" className="form-control" name="hirdetesDatuma" readOnly={true} value={new Date().toISOString().split('T')[0]} />
           </div>
           <div className="mb-3">
             <label for="description" className="form-label">Ingatlan leírása</label>
@@ -44,12 +70,12 @@ export function NewAd() {
           </div>
 
           <div className="alert alert-danger alert-dismissible" role="alert">
-            <strong>Hiba szövege</strong>
+            <strong ref={hibaRef}>Hiba szövege</strong>
             <button type="button" className="btn-close"></button>
           </div>
 
         </div>
-      </div>
+      </form>
     </div>
   )
 }
