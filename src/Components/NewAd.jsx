@@ -4,6 +4,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 
 export function NewAd() {
   const [categories, setCategory] = useState([]);
+  const [hibas, setHibas] = useState("");
   const hibaRef = useRef(null);
   const navigate = useNavigate();
   useEffect(() => {
@@ -14,7 +15,7 @@ export function NewAd() {
   return (
     <div className="container">
       <h2 className="mb-4 text-center">Új hirdetés elküldése</h2>
-      <form className="row" onSubmit={async (e) => {
+      <form className="row" onSubmit={(e) => {
         e.preventDefault();
         const ujIngatlan = {
           kategoriaId: Number(e.target.elements.kategoriaId.value),
@@ -24,18 +25,23 @@ export function NewAd() {
           kepUrl: e.target.elements.kepUrl.value
         }
 
-        const response = await fetch(`http://localhost:5000/api/ujingatlan`, {
+        const response = fetch(`http://localhost:5000/api/ujingatlan`, {
           method: 'POST',
           headers: {
             "content-type": "application/json"
           },
           body: JSON.stringify(ujIngatlan),
         })
-        if (response.status === 200) {
-          navigate("/offers")
-        } else {
-          hibaRef.current.innerHTML = response.status
-        }
+          .then(response => {
+            if (response.status === 200) {
+              navigate("/offers")
+            } else {
+              setHibas(response.statusText)
+            }
+          })
+          .catch(err => {
+            setHibas(err.message);
+          })
       }
       }>
         <div className="offset-lg-3 offset-md-2 col-lg-6 col-md-8 col-12">
@@ -58,7 +64,7 @@ export function NewAd() {
             <textarea className="form-control" name="leiras" rows="3"></textarea>
           </div>
           <div className="form-check mb-3">
-            <input className="form-check-input" type="checkbox" name="tehermentes" checked />
+            <input className="form-check-input" type="checkbox" name="tehermentes" defaultChecked="true" />
             <label className="form-check-label" for="creditFree">Tehermentes ingatlan</label>
           </div>
           <div className="mb-3">
@@ -69,10 +75,12 @@ export function NewAd() {
             <button className="btn btn-primary px-5">Küldés</button>
           </div>
 
-          <div className="alert alert-danger alert-dismissible" role="alert">
-            <strong ref={hibaRef}>Hiba szövege</strong>
-            <button type="button" className="btn-close"></button>
-          </div>
+          {hibas &&
+            <div className="alert alert-danger alert-dismissible" role="alert">
+              <strong ref={hibaRef}>{hibas}</strong>
+              <button type="button" className="btn-close" onClick={() => setHibas("")}></button>
+            </div>
+          }
 
         </div>
       </form>
